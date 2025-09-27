@@ -1,0 +1,32 @@
+--
+-- Create model Country
+--
+CREATE TABLE "insights_country" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "code" varchar(8) NOT NULL UNIQUE, "name" varchar(128) NOT NULL, "latitude" decimal NOT NULL, "longitude" decimal NOT NULL);
+--
+-- Create model CountryWeatherTrend
+--
+CREATE TABLE "insights_countryweathertrend" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "label" varchar(16) NOT NULL, "temperature" smallint NOT NULL, "country_id" bigint NOT NULL REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountryWeather
+--
+CREATE TABLE "insights_countryweather" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "condition" varchar(128) NOT NULL, "temperature" smallint NOT NULL, "feels_like" smallint NOT NULL, "humidity" smallint unsigned NOT NULL CHECK ("humidity" >= 0), "wind" varchar(64) NOT NULL, "precipitation_chance" smallint unsigned NOT NULL CHECK ("precipitation_chance" >= 0), "country_id" bigint NOT NULL UNIQUE REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountrySummary
+--
+CREATE TABLE "insights_countrysummary" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "headline" varchar(255) NOT NULL, "weather" varchar(255) NOT NULL, "persona" varchar(255) NOT NULL, "mood_narrative" text NOT NULL, "today_summary" text NOT NULL, "country_id" bigint NOT NULL UNIQUE REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountrySentiment
+--
+CREATE TABLE "insights_countrysentiment" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "label" varchar(32) NOT NULL, "recorded_date" date NULL, "score" smallint unsigned NOT NULL CHECK ("score" >= 0), "country_id" bigint NOT NULL REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountryNewsItem
+--
+CREATE TABLE "insights_countrynewsitem" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "title" varchar(255) NOT NULL, "summary" text NOT NULL, "url" varchar(500) NOT NULL, "category" varchar(64) NOT NULL, "tone" varchar(16) NOT NULL, "country_id" bigint NOT NULL REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountryInsightStat
+--
+CREATE TABLE "insights_countryinsightstat" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "label" varchar(128) NOT NULL, "value" varchar(64) NOT NULL, "change" varchar(64) NOT NULL, "sentiment" varchar(16) NOT NULL, "country_id" bigint NOT NULL REFERENCES "insights_country" ("id") DEFERRABLE INITIALLY DEFERRED);
+--
+-- Create model CountryAlert
+--
+

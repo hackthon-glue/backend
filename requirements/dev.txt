@@ -1,0 +1,6 @@
+-r base.txt
+
+black>=24.3
+isort>=5.13
+pytest>=8.2
+pytest-django>=4.8

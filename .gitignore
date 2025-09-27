@@ -1,0 +1,41 @@
+# Virtual environments
+.venv/
+
+# Django/pytest artifacts
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+apps/**/migrations/
+!apps/**/migrations/__init__.py
+
+# Environment variables
+.env
+
+# Static & media (collected or user uploads)
+staticfiles/
+media/
+
+# IDE / tooling
+*.iml
+*.sublime-project
+*.sublime-workspace
+.idea/
+.vscode/
+
+# Coverage / testing
+htmlcov/
+.coverage*
+.cache/
+.pytest_cache/
+
+# Local db dumps
+*.sql
+*.sqlite
+
+# OS metadata
+.DS_Store
+Thumbs.db
