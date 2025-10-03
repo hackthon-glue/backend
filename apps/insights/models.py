@@ -85,24 +85,6 @@ class CountrySentiment(models.Model):
         return f"Sentiment point {self.pk}"
 
 
-class CountryWeatherTrend(models.Model):
-    """Daily temperature forecast trend for the dashboard chart."""
-
-    country = models.ForeignKey(
-        Country,
-        on_delete=models.CASCADE,
-        related_name="weather_trends",
-    )
-    label = models.CharField(max_length=16)
-    temperature = models.SmallIntegerField()
-
-    class Meta:
-        ordering = ["id"]
-
-    def __str__(self) -> str:
-        return f"{self.country.code.upper()} trend {self.label}"
-
-
 class CountryNewsItem(models.Model):
     """Curated news entries influencing sentiment."""
 
@@ -130,51 +112,101 @@ class CountryNewsItem(models.Model):
         return f"{self.country.code.upper()} news: {self.title}"
 
 
-class CountryInsightStat(models.Model):
-    """Supplementary stats shown on the dashboard."""
+# ============================================================================
+# Panel Discussion Models (Read-only from RDS)
+# ============================================================================
 
-    class Sentiment(models.TextChoices):
-        POSITIVE = "positive", "Positive"
-        NEUTRAL = "neutral", "Neutral"
-        NEGATIVE = "negative", "Negative"
-
-    country = models.ForeignKey(
-        Country,
-        on_delete=models.CASCADE,
-        related_name="insight_stats",
-    )
-    label = models.CharField(max_length=128)
-    value = models.CharField(max_length=64)
-    change = models.CharField(max_length=64)
-    sentiment = models.CharField(max_length=16, choices=Sentiment.choices)
+class PanelDiscussion(models.Model):
+    """Panel discussion results (read-only from RDS)"""
 
     class Meta:
-        ordering = ["id"]
+        managed = False  # Django does not manage this table
+        db_table = 'panel_discussions'
+        ordering = ['-discussion_date', '-id']
+
+    class MoodChoices(models.TextChoices):
+        HAPPY = 'happy', 'Happy'
+        NEUTRAL = 'neutral', 'Neutral'
+        SAD = 'sad', 'Sad'
+
+    country_code = models.CharField(max_length=10)
+    topic = models.TextField()
+    final_mood = models.CharField(max_length=20, choices=MoodChoices.choices)
+    final_score = models.DecimalField(max_digits=5, decimal_places=2)
+    introduction = models.TextField(blank=True, null=True)
+    conclusion = models.TextField(blank=True, null=True)
+    discussion_date = models.DateField()
+    total_turns = models.IntegerField(null=True)
+    debate_rounds = models.IntegerField(null=True)
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField(null=True)
 
     def __str__(self) -> str:
-        return f"{self.country.code.upper()} stat {self.label}"
+        return f"{self.country_code} - {self.discussion_date} ({self.final_mood})"
 
 
-class CountryAlert(models.Model):
-    """Active alerts associated with a country."""
-
-    class Level(models.TextChoices):
-        INFO = "info", "Info"
-        WATCH = "watch", "Watch"
-        WARNING = "warning", "Warning"
-
-    country = models.ForeignKey(
-        Country,
-        on_delete=models.CASCADE,
-        related_name="alerts",
-    )
-    alert_type = models.CharField(max_length=64)
-    level = models.CharField(max_length=16, choices=Level.choices)
-    message = models.TextField()
-    recommended_action = models.CharField(max_length=255)
+class PanelExpertAnalysis(models.Model):
+    """Expert analysis from panel discussion (read-only)"""
 
     class Meta:
-        ordering = ["id"]
+        managed = False
+        db_table = 'panel_expert_analyses'
+        ordering = ['round_number', 'id']
+
+    discussion = models.ForeignKey(
+        PanelDiscussion,
+        on_delete=models.DO_NOTHING,
+        related_name='analyses'
+    )
+    expert_role = models.CharField(max_length=50)
+    analysis_text = models.TextField()
+    round_number = models.IntegerField()
+    created_at = models.DateTimeField()
 
     def __str__(self) -> str:
-        return f"{self.country.code.upper()} alert {self.alert_type}"
+        return f"{self.expert_role} - Round {self.round_number}"
+
+
+class PanelVote(models.Model):
+    """Voting results from panel discussion (read-only)"""
+
+    class Meta:
+        managed = False
+        db_table = 'panel_votes'
+
+    discussion = models.ForeignKey(
+        PanelDiscussion,
+        on_delete=models.DO_NOTHING,
+        related_name='votes'
+    )
+    expert_role = models.CharField(max_length=50)
+    vote_mood = models.CharField(max_length=20)
+    confidence = models.DecimalField(max_digits=5, decimal_places=2)
+    reasoning = models.TextField(blank=True)
+    created_at = models.DateTimeField()
+
+    def __str__(self) -> str:
+        return f"{self.expert_role}: {self.vote_mood} ({self.confidence}%)"
+
+
+class PanelTranscript(models.Model):
+    """Full conversation transcript (read-only)"""
+
+    class Meta:
+        managed = False
+        db_table = 'panel_transcripts'
+        ordering = ['turn_order']
+
+    discussion = models.ForeignKey(
+        PanelDiscussion,
+        on_delete=models.DO_NOTHING,
+        related_name='transcripts'
+    )
+    speaker = models.CharField(max_length=50)
+    content = models.TextField()
+    round_number = models.IntegerField(null=True)
+    turn_order = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    def __str__(self) -> str:
+        return f"{self.speaker} (Turn {self.turn_order})"

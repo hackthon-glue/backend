@@ -9,13 +9,10 @@ from django.db import transaction
 from apps.insights.data.demo import COUNTRIES
 from apps.insights.models import (
     Country,
-    CountryAlert,
-    CountryInsightStat,
     CountryNewsItem,
     CountrySentiment,
     CountrySummary,
     CountryWeather,
-    CountryWeatherTrend,
 )
 
 
@@ -75,18 +72,6 @@ class Command(BaseCommand):
                     ]
                 )
 
-                CountryWeatherTrend.objects.filter(country=country).delete()
-                CountryWeatherTrend.objects.bulk_create(
-                    [
-                        CountryWeatherTrend(
-                            country=country,
-                            label=point["label"],
-                            temperature=point["temperature"],
-                        )
-                        for point in insights["weatherTrend"]
-                    ]
-                )
-
                 CountryNewsItem.objects.filter(country=country).delete()
                 CountryNewsItem.objects.bulk_create(
                     [
@@ -99,34 +84,6 @@ class Command(BaseCommand):
                             tone=item["tone"],
                         )
                         for item in insights["news"]
-                    ]
-                )
-
-                CountryInsightStat.objects.filter(country=country).delete()
-                CountryInsightStat.objects.bulk_create(
-                    [
-                        CountryInsightStat(
-                            country=country,
-                            label=stat["label"],
-                            value=stat["value"],
-                            change=stat["change"],
-                            sentiment=stat["sentiment"],
-                        )
-                        for stat in insights["stats"]
-                    ]
-                )
-
-                CountryAlert.objects.filter(country=country).delete()
-                CountryAlert.objects.bulk_create(
-                    [
-                        CountryAlert(
-                            country=country,
-                            alert_type=alert["type"],
-                            level=alert["level"],
-                            message=alert["message"],
-                            recommended_action=alert["recommendedAction"],
-                        )
-                        for alert in insights["alerts"]
                     ]
                 )
 

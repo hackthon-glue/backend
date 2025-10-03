@@ -5,13 +5,14 @@ from rest_framework import serializers
 
 from .models import (
     Country,
-    CountryAlert,
-    CountryInsightStat,
     CountryNewsItem,
     CountrySentiment,
     CountrySummary,
     CountryWeather,
-    CountryWeatherTrend,
+    PanelDiscussion,
+    PanelExpertAnalysis,
+    PanelVote,
+    PanelTranscript,
 )
 
 
@@ -33,30 +34,12 @@ class CountrySentimentSerializer(serializers.ModelSerializer):
         return ""
 
 
-class CountryWeatherTrendSerializer(serializers.ModelSerializer):
-    """Serialize weather trend entries."""
-
-    date = serializers.CharField(source="label")
-
-    class Meta:
-        model = CountryWeatherTrend
-        fields = ["date", "temperature"]
-
-
 class CountryNewsItemSerializer(serializers.ModelSerializer):
     """Serialize curated news feeds."""
 
     class Meta:
         model = CountryNewsItem
         fields = ["title", "summary", "url", "category", "tone"]
-
-
-class CountryInsightStatSerializer(serializers.ModelSerializer):
-    """Serialize dashboard stats."""
-
-    class Meta:
-        model = CountryInsightStat
-        fields = ["label", "value", "change", "sentiment"]
 
 
 class CountryWeatherSerializer(serializers.ModelSerializer):
@@ -77,26 +60,12 @@ class CountryWeatherSerializer(serializers.ModelSerializer):
         ]
 
 
-class CountryAlertSerializer(serializers.ModelSerializer):
-    """Serialize country alerts."""
-
-    type = serializers.CharField(source="alert_type")
-    recommendedAction = serializers.CharField(source="recommended_action")
-
-    class Meta:
-        model = CountryAlert
-        fields = ["type", "level", "message", "recommendedAction"]
-
-
 class CountryInsightsSerializer(serializers.Serializer):
     """Nested representation of insight payload expected by the frontend."""
 
     sentiment = CountrySentimentSerializer(many=True, source="sentiments")
-    weatherTrend = CountryWeatherTrendSerializer(many=True, source="weather_trends")
     news = CountryNewsItemSerializer(many=True, source="news_items")
-    stats = CountryInsightStatSerializer(many=True, source="insight_stats")
     weatherNow = CountryWeatherSerializer(source="weather")
-    alerts = CountryAlertSerializer(many=True)
     moodNarrative = serializers.CharField(source="summary.mood_narrative")
     todaySummary = serializers.CharField(source="summary.today_summary")
 
@@ -120,3 +89,74 @@ class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         fields = ["code", "name", "lat", "lng", "summary", "insights"]
+
+
+# ============================================================================
+# Panel Discussion Serializers
+# ============================================================================
+
+class PanelTranscriptSerializer(serializers.ModelSerializer):
+    """Serialize panel transcript"""
+
+    class Meta:
+        model = PanelTranscript
+        fields = ["speaker", "content", "round_number", "turn_order"]
+
+
+class PanelVoteSerializer(serializers.ModelSerializer):
+    """Serialize panel vote"""
+
+    class Meta:
+        model = PanelVote
+        fields = ["expert_role", "vote_mood", "confidence", "reasoning"]
+
+
+class PanelExpertAnalysisSerializer(serializers.ModelSerializer):
+    """Serialize expert analysis"""
+
+    class Meta:
+        model = PanelExpertAnalysis
+        fields = ["expert_role", "analysis_text", "round_number"]
+
+
+class PanelDiscussionSerializer(serializers.ModelSerializer):
+    """Serialize complete panel discussion"""
+
+    analyses = PanelExpertAnalysisSerializer(many=True, read_only=True)
+    votes = PanelVoteSerializer(many=True, read_only=True)
+    transcripts = PanelTranscriptSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PanelDiscussion
+        fields = [
+            "id",
+            "country_code",
+            "topic",
+            "final_mood",
+            "final_score",
+            "introduction",
+            "conclusion",
+            "discussion_date",
+            "total_turns",
+            "debate_rounds",
+            "created_at",
+            "analyses",
+            "votes",
+            "transcripts",
+        ]
+
+
+class PanelDiscussionListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing discussions"""
+
+    class Meta:
+        model = PanelDiscussion
+        fields = [
+            "id",
+            "country_code",
+            "topic",
+            "final_mood",
+            "final_score",
+            "discussion_date",
+            "created_at",
+        ]
