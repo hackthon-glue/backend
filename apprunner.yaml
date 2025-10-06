@@ -9,9 +9,6 @@ build:
     build:
       - echo "Installing application requirements..."
       - pip install -r requirements/prod.txt
-    post-build:
-      - echo "Collecting static files..."
-      - python manage.py collectstatic --noinput
 run:
   command: gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 config.wsgi:application
   network:
